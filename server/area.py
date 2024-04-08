@@ -16,7 +16,7 @@ import os
 import datetime
 import logging
 
-logger = logging.getLogger("area")
+logger = logging.getLogger("events")
 
 
 class Area:
@@ -89,7 +89,7 @@ class Area:
                     self.caller.send_ooc(
                         f"[Timer {self.id}] An internal error occurred: {ex}. Please inform the staff of the server about the issue."
                     )
-                    logger.error("Exception while running a command")
+                    logger.exception("Exception while running a command")
                     # Command execution critically failed somewhere. Clear out all commands so the timer doesn't screw with us.
                     self.commands.clear()
                     # Even tho self.commands.clear() is going to break us out of the while loop, manually return anyway just to be safe.
@@ -158,7 +158,11 @@ class Area:
         # Sends a message to the IC when changing areas
         self.passing_msg = False
         # Minimum time that has to pass before you can send another message
-        self.msg_delay = 200
+        # self.msg_delay = 200
+        # Minimum time that has to pass before you can send another message
+        self.min_msg_delay = 200
+        # Maximum delay before you are allowed to send another message
+        self.max_msg_delay = 5000
         # Whether to reveal evidence in all pos if it is presented
         self.present_reveals_evidence = True
         # /prefs end
@@ -217,6 +221,7 @@ class Area:
 
         self.music_looper = None
         self.next_message_time = 0
+        self.next_message_delay = 100
         self.judgelog = []
         self.music = ""
         self.music_player = ""
@@ -333,7 +338,7 @@ class Area:
             owner.send_ooc(
                 f"[Area {self.id}] An internal error occurred: {ex}. Please inform the staff of the server about the issue."
             )
-            logger.error("Exception while running a command")
+            logger.exception("Exception while running a command")
 
     def abbreviate(self):
         """Abbreviate our name."""
@@ -508,8 +513,12 @@ class Area:
             self.desc_dark = area["desc_dark"]
         if 'passing_msg' in area:
             self.passing_msg = area['passing_msg']
-        if 'msg_delay' in area:
-            self.msg_delay = area['msg_delay']
+        # if 'msg_delay' in area:
+        #     self.msg_delay = area['msg_delay']
+        if 'min_msg_delay' in area:
+            self.min_msg_delay = area['min_msg_delay']
+        if 'max_msg_delay' in area:
+            self.max_msg_delay = area['max_msg_delay']
         if 'present_reveals_evidence' in area:
             self.present_reveals_evidence = area['present_reveals_evidence']
 
@@ -627,7 +636,8 @@ class Area:
         area["pos_dark"] = self.pos_dark
         area["desc_dark"] = self.desc_dark
         area["passing_msg"] = self.passing_msg
-        area["msg_delay"] = self.msg_delay
+        # area["msg_delay"] = self.msg_delay
+        area["min_msg_delay"] = self.min_msg_delay
         area["present_reveals_evidence"] = self.present_reveals_evidence
         if len(self.evi_list.evidences) > 0:
             area["evidence"] = [e.to_dict() for e in self.evi_list.evidences]
@@ -874,6 +884,15 @@ class Area:
                 c.send_command(cmd, *args)
                 if c.area.background != bg:
                     c.send_command("BN", c.area.background)
+
+    def set_next_msg_delay(self, msg_length: int):
+        """Set the delay when the next IC message can be send by any client.
+        Args:
+            msg_length (int): estimated length of message (ms)
+        """
+
+        delay = min(2900, 60 * msg_length)
+        self.next_message_time = round(time.time() * 1000.0 + delay + self.next_message_delay)
 
     def broadcast_ooc(self, msg):
         """
@@ -1284,7 +1303,17 @@ class Area:
         :param msg: the string
         :return: delay integer in ms
         """
-        return self.msg_delay
+        # Strip formatting chars
+        for char in "@$`|_~%\\}{":
+            msg = msg.replace(char, "")
+        # Very basic approximation of text length
+        delay = len(msg) * 40 + 40
+        # Minimum area msg delay
+        delay = max(self.min_msg_delay, delay)
+        # Maximum area msg delay
+        delay = min(self.max_msg_delay, delay)
+        return delay
+        # return self.msg_delay
 
     def is_iniswap(self, client, preanim, anim, char, sfx):
         """
@@ -2120,7 +2149,7 @@ class Area:
                 client.send_ooc(
                     f"[Demo] An internal error occurred: {ex}. Please inform the staff of the server about the issue."
                 )
-                logger.error("Exception while running a command")
+                logger.exception("Exception while running a command")
                 self.stop_demo()
                 return
         elif len(client.broadcast_list) > 0:
