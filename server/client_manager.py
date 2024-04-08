@@ -1421,11 +1421,13 @@ class ClientManager:
                         name = f":{c.area.evi_list.evidences[c.hidden_in].name}"
                     info += f"📦{name}"
                 if c.is_mod:
-                    info += "[M]"
+                    info += "[M] "
                 elif c in area.area_manager.owners:
-                    info += "[GM]"
+                    info += "[GM] "
                 elif c in area._owners:
-                    info += "[CM]"
+                    info += "[CM] "
+                if len(c.hdid) == 32:
+                    info += "[WEB] "
                 info += f"[{c.id}] "
                 if c.showname != c.char_name:
                     info += f'"{c.showname}" ({c.char_name})'
