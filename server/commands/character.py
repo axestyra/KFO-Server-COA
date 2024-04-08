@@ -1,5 +1,5 @@
 import shlex
-
+import urllib.parse
 import random
 
 from server import database
@@ -1189,7 +1189,7 @@ def ooc_cmd_webfiles(client, arg):
     args = arg.split(" ")
 
     try:
-        if args[0] == "*":
+        if args[0] == "*" or args[0] == "":
             targets = [
                 c
                 for c in client.area.clients
@@ -1204,7 +1204,8 @@ def ooc_cmd_webfiles(client, arg):
 
     try:
         for c in targets:
-            client.send_ooc(f"To download the files, visit https://attorneyonline.github.io/webDownloader/index.html?char={c.iniswap}")
+            if c.iniswap != "":
+                client.send_ooc(f"To download the files, visit https://attorneyonline.github.io/webDownloader/index.html?char={urllib.parse.quote(c.iniswap)}")
     except Exception:
         raise ClientError("You must specify a target. Use /webfiles <id>")
 
