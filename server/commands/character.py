@@ -1205,7 +1205,7 @@ def ooc_cmd_webfiles(client, arg):
     try:
         for c in targets:
             if c.iniswap != "":
-                client.send_ooc(f"To download the files, visit https://attorneyonline.github.io/webDownloader/index.html?char={urllib.parse.quote(c.iniswap)}")
+                client.send_ooc(f"To download the files, visit https://attorneyonline.github.io/webDownloader/index.html?char={urllib.parse.quote(c.iniswap.lower())}")
     except Exception:
         raise ClientError("You must specify a target. Use /webfiles <id>")
 
