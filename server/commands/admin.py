@@ -139,7 +139,7 @@ def ooc_cmd_ban(client, arg):
     Usage: /ban <ipid> "reason" ["<N> <minute|hour|day|week|month>(s)|perma"]
     Usage 2: /ban <ipid> <ban_id>
     """
-    kickban(client, arg, False)
+    kickban(client, arg, True)
 
 
 def ooc_cmd_banhdid(client, arg):
