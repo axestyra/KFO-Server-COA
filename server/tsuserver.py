@@ -46,6 +46,7 @@ class TsuServer3:
         self.ipRange_bans = []
         self.geoIpReader = None
         self.useGeoIp = False
+        self.need_webhook = True
         self.supported_features = [
             "yellowtext",
             "customobjections",
@@ -427,6 +428,17 @@ class TsuServer3:
         ooc_name = (
             f"<dollar>G[{client.area.abbreviation}]|{as_mod}{client.name}"
         )
+        self.send_all_cmd_pred("CT", ooc_name, msg,
+                               pred=lambda x: not x.muted_global)
+
+    def discord_global(self, discord_name, msg):
+        """
+        Broadcast an OOC message from Discord to all clients that do not have
+        global chat muted.
+        :param msg: message
+
+        """
+        ooc_name = (f"<dollar>G[DISCORD]|{discord_name}")
         self.send_all_cmd_pred("CT", ooc_name, msg,
                                pred=lambda x: not x.muted_global)
 
