@@ -28,21 +28,30 @@ def message_areas_cm(client, areas, message):
         database.log_area("chat.cm", client, a, message=message)
 
 
+# @mod_only()
 def ooc_cmd_g(client, arg):
     """
     Broadcast a server-wide message.
     Usage: /g <message>
     """
+    # if len(client.hdid) == 32:
+    #     raise ClientError("Web users may not use global chat!")
     if not client.server.config["global_chat"]:
         raise ClientError("Global chat is disabled.")
     if client.muted_global:
         raise ClientError("Global chat toggled off.")
     if len(arg) == 0:
         raise ArgumentError("You can't send an empty message.")
+    if not client.can_send_global():
+        client.send_ooc("Please wait 5 seconds between global/hub messages!")
+        return
     client.server.broadcast_global(client, arg, client.is_mod)
+    client.server.webhooks.globalhook(client, chatmsg=arg, modcheck=client.is_mod)
+    client.set_global_send_delay()
     database.log_area("chat.global", client, client.area, message=arg)
 
 
+# @mod_only()
 def ooc_cmd_h(client, arg):
     """
     Broadcast a hub-wide message.
@@ -50,6 +59,9 @@ def ooc_cmd_h(client, arg):
     """
     if len(arg) == 0:
         raise ArgumentError("You can't send an empty message.")
+    if not client.can_send_global():
+        client.send_ooc("Please wait 5 seconds between global/hub messages!")
+        return
     prefix = ""
     if client.is_mod:
         prefix = "[M]"
@@ -58,7 +70,8 @@ def ooc_cmd_h(client, arg):
 
     name = f"{prefix}{client.name}"
     for area in client.area.area_manager.areas:
-        area.send_command("CT", f"<dollar>HUB|{name}", arg, "0")
+        area.send_command("CT", f"<dollar>HUB[{client.area.abbreviation}]|{name}", arg, "0")
+    client.set_global_send_delay()
     database.log_area("chat.hub", client, client.area, message=arg)
 
 
@@ -106,16 +119,25 @@ def ooc_cmd_toggleglobal(client, arg):
 
 
 @mod_only(area_owners=True)
+# @mod_only()
 def ooc_cmd_need(client, arg):
     """
     Broadcast a server-wide advertisement for your role-play or case.
     Usage: /need <message>
     """
+    # if len(client.hdid) == 32:
+    #     raise ClientError("Web users may not use advertisements!")
     if client.muted_adverts:
         raise ClientError("You have advertisements muted.")
     if len(arg) == 0:
         raise ArgumentError("You must specify what you need.")
+    if not client.can_call_case():
+        client.send_ooc("Please wait 60 seconds between need announcements!")
+        return
     client.server.broadcast_need(client, arg)
+    if client.server.need_webhook == True:
+        client.server.webhooks.needcall(client, client.area, arg, True)
+    client.set_case_call_delay()
     database.log_area("chat.announce.need", client, client.area, message=arg)
 
 
@@ -133,11 +155,11 @@ def ooc_cmd_toggleadverts(client, arg):
     client.send_ooc(f"Advertisements turned {adv_stat}.")
 
 
+# @mod_only()
 def ooc_cmd_pm(client, arg):
     """
     Send a private message to another online user. These messages are not
     logged by the server owner.
-    The Target Types <ooc-name> and <char-name> work only if the target is in the same area.
     Usage: /pm <id|ooc-name|char-name> <message>
     """
     args = arg.split()
@@ -148,17 +170,17 @@ def ooc_cmd_pm(client, arg):
             'Not enough arguments. use /pm <target> <message>. Target should be ID, OOC-name or char-name. Use /getarea for getting info like "[ID] char-name".'
         )
     targets = client.server.client_manager.get_targets(
-        client, TargetType.CHAR_NAME, arg, local=True
+        client, TargetType.CHAR_NAME, arg, True
     )
     key = TargetType.CHAR_NAME
     if len(targets) == 0 and args[0].isdigit():
         targets = client.server.client_manager.get_targets(
-            client, TargetType.ID, int(args[0]), all_hub=True
+            client, TargetType.ID, int(args[0]), False
         )
         key = TargetType.ID
     if len(targets) == 0:
         targets = client.server.client_manager.get_targets(
-            client, TargetType.OOC_NAME, arg, local=True
+            client, TargetType.OOC_NAME, arg, True
         )
         key = TargetType.OOC_NAME
     if len(targets) == 0:
