@@ -577,3 +577,16 @@ def ooc_cmd_multiclients(client, arg):
             info += f": {c.name}"
     info += f"\nMatched {len(found_clients)} online clients."
     client.send_ooc(info)
+
+@mod_only()
+def ooc_cmd_webhook(client, arg):
+    """
+    Toggle need webhooks on/off if necessary.
+    Usage: /webhook
+    """
+    if client.server.need_webhook == True:
+        client.server.need_webhook = False
+    else:
+        client.server.need_webhook = True
+
+    client.send_ooc(f"Need webhooks set to {client.server.need_webhook}.")
