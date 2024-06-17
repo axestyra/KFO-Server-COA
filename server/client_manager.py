@@ -73,6 +73,8 @@ class ClientManager:
             self.casing_steno = False
             self.case_call_time = 0
 
+            self.global_send_time = 0
+
             # flood-guard stuff
             self.mus_counter = 0
             self.mus_mute_time = 0
@@ -1902,6 +1904,14 @@ class ClientManager:
         def can_call_case(self):
             """Whether or not the client can currently announce a case."""
             return (time.time() * 1000.0 - self.case_call_time) > 0
+
+        def set_global_send_delay(self):
+            """Begin the global message cooldown."""
+            self.global_send_time = round(time.time() * 1000.0 + 5000)
+
+        def can_send_global(self):
+            """Whether or not the client can send a global message."""
+            return (time.time() * 1000.0 - self.global_send_time) > 0
 
         def disemvowel_message(self, message):
             """Disemvowel a chat message."""
