@@ -21,6 +21,7 @@ class Webhooks:
         message=None,
         embed=False,
         title=None,
+        color=None,
         description=None,
         url=None,
     ):
@@ -40,6 +41,7 @@ class Webhooks:
             embed = {}
             embed["description"] = description
             embed["title"] = title
+            embed["color"] = color
             data["embeds"].append(embed)
         result = requests.post(
             url, data=json.dumps(data), headers={"Content-Type": "application/json"}
@@ -56,6 +58,7 @@ class Webhooks:
                 ),
             )
 
+
     def modcall(self, char, ipid, area, reason=None):
         is_enabled = self.server.config["modcall_webhook"]["enabled"]
         username = self.server.config["modcall_webhook"]["username"]
@@ -64,6 +67,7 @@ class Webhooks:
         mod_role_id = self.server.config["modcall_webhook"]["mod_role_id"]
         mods = len(self.server.client_manager.get_mods())
         current_time = strftime("%H:%M", gmtime())
+        color = self.server.config["modcall_webhook"]["color"]
 
         if not is_enabled:
             return
@@ -86,19 +90,79 @@ class Webhooks:
             message=message,
             embed=True,
             title="Modcall",
+            color = color,
             description=description,
         )
+    
+    def globalhook(self, client=None, chatmsg=None, modcheck=False):
+        avatar_url = self.server.config["need_webhook"]["avatar_url"]
+        if modcheck == True:
+            self.send_webhook(
+            username="Global",
+            avatar_url=avatar_url,
+            message=f"$G[{client.area.abbreviation}]|[M]{client.name}: {chatmsg}",
+            url="GLOBAL_CHANNEL_HERE"
+        )
+        else:
+            self.send_webhook(
+            username="Global",
+            avatar_url=avatar_url,
+            message=f"$G[{client.area.abbreviation}]|{client.name}: {chatmsg}",
+            url="GLOBAL_CHANNEL_HERE"
+        )
+        
 
+    def needcall(self, client=None, area=None, reason=None, pingoption = False):
+        is_enabled = self.server.config["need_webhook"]["enabled"]
+        username = self.server.config["need_webhook"]["username"]
+        avatar_url = self.server.config["need_webhook"]["avatar_url"]
+        color = self.server.config["need_webhook"]["case_color"]
+
+        if not is_enabled:
+            return
+
+        # if mods == 0 and no_mods_ping:
+        #     modcall = f"<&@{mod_role_id}>"
+        #     message = f"{modcall if mod_role_id is not None else '@here'} A user called for a moderator, but there are none online!"
+        # else:
+        #     if mods == 1:
+        #         s = ""
+        #     else:
+        #         s = "s"
+        #     message = f"New modcall received ({mods} moderator{s} online)"
+
+        if pingoption == True:
+            message = f"<@&NEED_ROLE_PING_HERE> A user has used the /need command for players in the Attorney Online server!"
+        else:
+            message = f"A user has used the /need command for players in the Attorney Online server!"
+        description = f"{client.name} ({client.ipid}) in hub [{area.area_manager.id}] {area.area_manager.name} [{area.id}] {area.name} {'without reason (using <2.6?)' if reason is None else f'needs: {reason}'}"
+
+        self.send_webhook(
+            username=username,
+            avatar_url=avatar_url,
+            message=message,
+            embed=True,
+            title="AO NEED CALL",
+            color=color,
+            description=description,
+            url="NEED_CHANNEL_PINGS_HERE"
+        )
+    
     def login(self, client=None, loginprofile=""):
-        username = self.server.config["modcall_webhook"]["username"]
-        avatar_url = self.server.config["modcall_webhook"]["avatar_url"]
+        is_enabled = self.server.config["login_webhook"]["enabled"]
+        username = self.server.config["login_webhook"]["username"]
+        avatar_url = self.server.config["login_webhook"]["avatar_url"]
 
-        message = f"{client.name} ({client.ipid}) has logged in as mod profile: {loginprofile}"
+        if not is_enabled:
+            return
+
+        message = f"{client.name} ({client.ipid}) (hdid: {client.hdid}) has logged in as mod profile: {loginprofile}"
     
 
         self.send_webhook(username=username,
                           avatar_url=avatar_url, message=message)
-                          
+
+
     def kick(self, ipid, reason="", client=None, char=None):
         is_enabled = self.server.config["kick_webhook"]["enabled"]
         username = self.server.config["kick_webhook"]["username"]
