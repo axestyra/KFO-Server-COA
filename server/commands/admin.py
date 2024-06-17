@@ -303,16 +303,22 @@ def ooc_cmd_unmute(client, arg):
             client.send_ooc(f"{raw_ipid} does not look like a valid IPID.")
 
 
+# 2 factor authentication
 def ooc_cmd_login(client, arg):
     """
     Login as a moderator.
-    Usage: /login <password>
+    Usage: /login <password> <2auth>
     """
     if len(arg) == 0:
         raise ArgumentError("You must specify the password.")
     login_name = None
+    splitargslogin = arg.split(" ")
+    if len(splitargslogin) == 1:
+        raise ArgumentError("You must specify the 2 auth.")
+    if splitargslogin[1] != "2AUTH-STRING-HERE":
+        raise ArgumentError("You have specified the wrong 2auth pass.")
     try:
-        login_name = client.auth_mod(arg)
+        login_name = client.auth_mod(splitargslogin[0])
     except ClientError:
         database.log_misc("login.invalid", client)
         raise
