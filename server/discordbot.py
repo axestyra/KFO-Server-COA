@@ -70,6 +70,32 @@ class Bridgebot(commands.Bot):
         if message.channel != self.channel:
             return
 
+        if message.content.startswith("!clientcount"):
+            number_players = int(self.server.player_count)
+            await self.channel.send(f"There are {number_players}/300 clients in the AO Server!")
+            return
+
+
+        if message.content.startswith("!getarea") or message.content.startswith("!getareas"):
+            await self.channel.send(f"I hasn't implemented this yet :( ")
+            return
+        
+        if message.content.startswith("!g "):
+            try:
+                max_char = int(self.server.config["max_chars_ic"])
+            except Exception:
+                max_char = 256
+            if len(message.clean_content) > max_char:
+                await self.channel.send(
+                    "Your message was too long - it was not received by the client. (The limit is 256 characters)"
+                )
+                return
+            stripmsg = message.clean_content[3:]
+            self.server.discord_global(message.author.name, stripmsg)
+            await self.channel.send(f"$G[DISCORD]|{message.author.name}: {stripmsg}")
+            return
+
+
         if not message.content.startswith("$"):
             try:
                 max_char = int(self.server.config["max_chars_ic"])
