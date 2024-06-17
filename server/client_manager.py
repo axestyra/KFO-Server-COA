@@ -1428,6 +1428,8 @@ class ClientManager:
                     info += "[GM] "
                 elif c in area._owners:
                     info += "[CM] "
+                elif c.id in area.invite_list:
+                    info += "[INV] "
                 if len(c.hdid) == 32:
                     info += "[WEB] "
                 info += f"[{c.id}] "
