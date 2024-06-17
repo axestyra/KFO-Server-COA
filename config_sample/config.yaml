@@ -131,10 +131,11 @@ webhook_url: example.com
 # Settings for the modcall webhook. Leaving a setting blank will use its default behavior.
 modcall_webhook:
   enabled: true
-  username: Modcall # the username the webhook will use
+  username: ModBot # the username the webhook will use
   avatar_url: # url of a custom avatar image, leave blank to use the avatar the webhook was set up with
-  ping_on_no_mods: false # whether or not to ping mods if a modcall is received while no moderators are online
+  ping_on_no_mods: true # whether or not to ping mods if a modcall is received while no moderators are online
   mod_role_id: # the role ID of the role you want pinged. leave blank to use @here instead
+  color: "16777215"
 
 kick_webhook:
   enabled: true
@@ -147,6 +148,17 @@ ban_webhook: # fires on both regular and HDID bans
   avatar_url:
 
 unban_webhook:
-  enabled: true
+  enabled: false
   username: Unban
   avatar_url:
+
+login_webhook:
+  enabled: true
+  username: Login
+  avatar_url:
+
+need_webhook:
+  enabled: true
+  username: Need
+  avatar_url:
+  case_color: "12745742"
